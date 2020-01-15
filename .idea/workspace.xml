@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c54a7685-bac2-403a-9eac-16b9c5c64567" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Clojure Namespace" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectId" id="1WPnLnflgQaqNvDvG9K9e7Yi6Uw" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="cursive.last.file.extension./home/garett/Development/mnist-clojure/src" value="clj" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../williams-team-deejayesselwalnutdust" />
+  </component>
+  <component name="ReplState" timestamp="1579131159703">{:repl-history {:ide [], :local [{:command &quot;(as-&gt; (get-mnist-image-data \&quot;resources/train-images.idx3-ubyte\&quot;) $\n      (take 784 $))&quot;, :offset 86, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)&quot;, :offset 53, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(get-mnist-data \&quot;resources/train-images.idx3-ubyte\&quot; 2051)&quot;, :offset 57, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int '(0 3 0 0) 0)&quot;, :offset 33, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int '(0 3) 0)&quot;, :offset 29, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int '(0 3 0 0 3 0) 0)&quot;, :offset 37, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int '(0 3 0 0 3 0) 2)&quot;, :offset 37, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  data)&quot;, :offset 73, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (sublist-bytes-&gt;int data 0))&quot;, :offset 96, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0) 2051)\n    (-&gt;&gt; data\n         (map (partial format \&quot;%02x\&quot;))\n         (map (partial str \&quot;0x\&quot;))\n         (map read-string))\n    (error \&quot;Data failed validation\&quot;)))&quot;, :offset 262, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0) 2051)\n    (-&gt;&gt; data\n         (map byte))\n    (error \&quot;Data failed validation\&quot;)))&quot;, :offset 182, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;)))&quot;, :offset 162, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(take 4 (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))))&quot;, :offset 171, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(map byte (take 4 (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;)))))&quot;, :offset 182, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(defn sublist-bytes-&gt;int [coll start length]\n  \&quot;Converts the bytes between the start index of the coll to start+4 to an unsigned integer\&quot;\n  (-&gt;&gt; coll\n       (drop start)\n       (take length)\n       (bytes-&gt;int)))&quot;, :offset 212, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(defn get-mnist-image-data [file-name]\n  \&quot;Get mnist images data.\&quot;\n  (let [data (get-mnist-data file-name 2051)]\n    {:data       (drop 16 data)\n     :num-images (sublist-bytes-&gt;int data 4 4)\n     :height     (sublist-bytes-&gt;int data 8 4)\n     :width      (sublist-bytes-&gt;int data 12 4)}))&quot;, :offset 288, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(map byte (take 4 (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;)))))&quot;, :offset 184, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(bytes-&gt;int (take 4 (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;)))))&quot;, :offset 186, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 0 4)&quot;, :offset 190, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 8 4)&quot;, :offset 190, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 12 4)&quot;, :offset 191, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 16 4)&quot;, :offset 191, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 32 4)&quot;, :offset 191, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 100 4)&quot;, :offset 192, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 128 4)&quot;, :offset 192, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(sublist-bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))) 132 4)&quot;, :offset 192, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(map bytes-&gt;int  (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))))&quot;, :offset 182, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(map bytes-&gt;int (drop 4 (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;)))))&quot;, :offset 190, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(take 300(let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;))))&quot;, :offset 174, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(.pow 3 4)&quot;, :offset 10, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(Math/pow 3 4)&quot;, :offset 14, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(int (Math/pow 3 4))&quot;, :offset 20, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(defn byte-&gt;int [byte]\n  \&quot;Hacky method of converting a single byte to int.\&quot;\n  (if (neg-int? byte)\n    (- 256 byte)\n    byte))&quot;, :offset 125, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(defn byte-&gt;int [byte]\n  \&quot;Hacky method of converting a single byte to int.\&quot;\n  (if (neg-int? byte)\n    (+ 256 byte)\n    byte))&quot;, :offset 125, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(map byte-&gt;int (take 300 (let [data (read-mnist-file \&quot;resources/train-images.idx3-ubyte\&quot;)]\n  (if (= (sublist-bytes-&gt;int data 0 4) 2051)\n    (-&gt;&gt; data)\n    (error \&quot;Data failed validation\&quot;)))))&quot;, :offset 191, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(defn get-mnist-data [file-name magic-number]\n  \&quot;Reads a mnist data file and validates the magic number\&quot;\n  (let [data (read-mnist-file file-name)]\n    (if (= (sublist-bytes-&gt;int data 0 4) magic-number)\n      data\n      (error \&quot;Data failed validation\&quot;))))&quot;, :offset 254, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(defn get-mnist-image-data [file-name]\n  \&quot;Get mnist images data.\&quot;\n  (let [data (get-mnist-data file-name 2051)]\n    {:data       (map byte-&gt;int (drop 16 data))\n     :num-images (sublist-bytes-&gt;int data 4 4)\n     :height     (sublist-bytes-&gt;int data 8 4)\n     :width      (sublist-bytes-&gt;int data 12 4)}))&quot;, :offset 304, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(get-mnist-image-data \&quot;resources/train-images.idx3-ubyte\&quot;)&quot;, :offset 58, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(let [data (get-mnist-data \&quot;resources/train-images.idx3-ubyte\&quot; 2051)]\n  {\n   :num-images (sublist-bytes-&gt;int data 4 4)\n   :height     (sublist-bytes-&gt;int data 8 4)\n   :width      (sublist-bytes-&gt;int data 12 4)})&quot;, :offset 211, :ns &quot;mnist-clojure.core&quot;} {:command &quot;(let [data (get-mnist-data \&quot;resources/train-images.idx3-ubyte\&quot; 2051)]\n  {:data       (drop 16 data)\n   :num-images (sublist-bytes-&gt;int data 4 4)\n   :height     (sublist-bytes-&gt;int data 8 4)\n   :width      (sublist-bytes-&gt;int data 12 4)})&quot;, :offset 237, :ns &quot;mnist-clojure.core&quot;}], :remote []}}</component>
+  <component name="RunManager">
+    <configuration name="REPL for mnist-clojure" type="ClojureREPL" factoryName="Local" activateToolWindowBeforeRun="false" temporary="true">
+      <module name="mnist-clojure" />
+      <setting name="replType" value="NREPL" />
+      <setting name="execution" value="LEININGEN" />
+      <setting name="jvmArgs" value="" />
+      <setting name="parameters" value="" />
+      <setting name="workingDir" value="$PROJECT_DIR$" />
+      <setting name="profiles" value="" />
+      <setting name="aliases" value="" />
+      <setting name="fixLineNumbers" value="false" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="ClojureREPL" factoryName="Local" activateToolWindowBeforeRun="false">
+      <setting name="replType" value="NREPL" />
+      <setting name="execution" value="LEININGEN" />
+      <module name="" />
+      <setting name="jvmArgs" value="" />
+      <setting name="parameters" value="" />
+      <setting name="workingDir" value="" />
+      <setting name="profiles" value="" />
+      <setting name="aliases" value="" />
+      <setting name="fixLineNumbers" value="false" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="ClojureREPL" factoryName="Remote" activateToolWindowBeforeRun="false">
+      <setting name="host" value="" />
+      <setting name="port" value="0" />
+      <setting name="replType" value="SOCKET" />
+      <setting name="configType" value="SPECIFY" />
+      <setting name="fixLineNumbers" value="false" />
+      <module name="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Clojure REPL.REPL for mnist-clojure" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="ServiceViewManager">
+    <option name="viewStates">
+      <list>
+        <serviceView>
+          <treeState>
+            <expand />
+            <select />
+          </treeState>
+        </serviceView>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c54a7685-bac2-403a-9eac-16b9c5c64567" name="Default Changelist" comment="" />
+      <created>1579060043252</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1579060043252</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="743" y="311" width="424" height="491" key="FileChooserDialogImpl" timestamp="1579060731862">
+      <screen x="0" y="27" width="1920" height="1053" />
+    </state>
+    <state x="743" y="311" width="424" height="491" key="FileChooserDialogImpl/0.27.1920.1053@0.27.1920.1053" timestamp="1579060731862" />
+    <state x="624" y="236" width="662" height="642" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1579123052887">
+      <screen x="0" y="27" width="1920" height="1053" />
+    </state>
+    <state x="624" y="236" width="662" height="642" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.27.1920.1053@0.27.1920.1053" timestamp="1579123052887" />
+  </component>
+</project>
