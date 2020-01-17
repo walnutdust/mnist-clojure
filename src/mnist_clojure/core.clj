@@ -83,3 +83,15 @@
          (partition (* width height))
          (map (partial partition width)))))
 
+(defn sigmoid
+  "Performs the sigmoid function on the input."
+  {:test (fn []
+           (is= (sigmoid 0) 0.5)
+           (is= (sigmoid -1) 0.2689414213699951)
+           (is= (sigmoid 1) 0.7310585786300049))}
+  [input]
+  (->> (- input)
+       (Math/exp)
+       (+ 1)
+       (/ 1)))
+
