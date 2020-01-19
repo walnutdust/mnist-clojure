@@ -56,7 +56,10 @@
 (defn get-mnist-image-data [file-name]
   "Get mnist images data."
   (let [data (get-mnist-data file-name 2051)]
-    {:data       (map byte->int (drop 16 data))
+    {:data       (->> data
+                      (drop 16)
+                      (map byte->int)
+                      (map (partial * (/ 1 255))))
      :num-images (sublist-bytes->int data 4 4)
      :height     (sublist-bytes->int data 8 4)
      :width      (sublist-bytes->int data 12 4)}))
@@ -116,21 +119,37 @@
   {:test (fn []
            (is= (initialize-layer 1 3 0) '((0.0 0.0) (0.0 0.0) (0.0 0.0))))}
   [input-count output-count max]
-  (->> (partial rand-vec-max-mag (+ input-count 1) (* 2 max))
+  (->> (partial rand-vec-max-mag (+ input-count 1) max)
        (repeatedly)
        (take output-count)
        (vec)))                                              ; Make vec for random access
 
 (defn train-once
   "Processes one cycle of training the layer on the input and output"
-  [input output layer learning-factor]
-  (let [updates (->> (multiply layer (conj (flatten input) 1)) ; conj 1 for the bias
-                     (flatten)
-                     (map sigmoid)                          ; TODO other functions could replace this too
-                     (map - output)
+  {:test (fn []
+           (is= (train-once `((1) (0.2) (0.1))
+                            `(1 0 0)
+                            `((0.1 0.2 0.1 0.2)
+                              (0.1 0.1 0.2 0.2))
+                            0.5)
+                '((0.3400053299222091 0.4400053299222091 0.14800106598444182 0.22400053299222092)
+                  (-0.1400053299222091 -0.1400053299222091 0.1519989340155582 0.1759994670077791))))}
+  [input desired-output layer learning-factor]
+  (let [input (-> input
+                  (flatten)
+                  (conj 1))                                 ; conj 1 for the bias, note that it is added to the front
+        intermediate (->> (multiply layer input)
+                          (flatten)
+                          (map (fn [x] (Math/exp x))))
+        total (apply + intermediate)
+        actual-output (map (fn [x] (/ x total)) intermediate) ; softmax
+        updates (->> actual-output
+                     (map - desired-output)
                      (map (partial * learning-factor)))]
     (for [n (range (count updates))
-          :let [updated-row (map (partial * (+ 1 (nth updates n))) (nth layer n))]]
+          :let [updated-row (->> input
+                                 (map (partial * (nth updates n)))
+                                 (map + (nth layer n)))]]
       updated-row)))
 
 (defn output-vector
@@ -145,7 +164,7 @@
       (assoc (+ 0 label) 1)))
 
 (defn train
-  [images-path labels-path]
+  [images-path labels-path training-factor]
   (println "Training the model...")
   (let [{images     :data
          width      :width
@@ -162,7 +181,7 @@
           layer
           (recur (rest images)
                  (rest labels)
-                 (train-once (first images) (output-vector (first labels)) layer 0.2)
+                 (train-once (first images) (output-vector (first labels)) layer training-factor)
                  (do (when (= 0 (mod n 100)) (println n "/" num-images))
                      (inc n)))))
       (error "The number of images and labels do not match"))))
@@ -183,7 +202,7 @@
        (first)))
 
 (comment
-  (let [model (train "resources/train-images.idx3-ubyte" "resources/train-labels.idx1-ubyte")
+  (let [model (train "resources/train-images.idx3-ubyte" "resources/train-labels.idx1-ubyte" 0.2)
         {test-images :data
          width       :width
          height      :height

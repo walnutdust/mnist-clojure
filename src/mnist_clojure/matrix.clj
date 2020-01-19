@@ -8,6 +8,7 @@
   "Multiplies two vectors. Assumes both vectors are represented by collections in the same dimension."
   {:test (fn []
            (is= (dot '(1 2 3) '(1 2 3)) 14)
+           ; Throws an error if dimensions of input matrices are not the same.
            (error? (dot '(1 2 3) '(1 2))))}
   [v1 v2]
   (if (= (count v1) (count v2))
@@ -18,7 +19,9 @@
 (defn matrix-dimensions
   "Returns a row major matrix's dimensions in [rows columns], with [nil nil] if input is not a matrix."
   {:test (fn []
+           ; Correctly computes the dimensions of a matrix
            (is= (matrix-dimensions '((1 2 3) (3 4 3))) [2 3])
+           ; Returns [nil nil] for invalid matrices - not regular, not a 2d list, and simply an integer
            (is= (matrix-dimensions '((1) (2 3))) [nil nil])
            (is= (matrix-dimensions '(1 2 3)) [nil nil])
            (is= (matrix-dimensions 1) [nil nil]))}
@@ -44,10 +47,10 @@
 
 (defn- is-matrix?
   "Checks if a given input is a matrix by checking if it conforms to a regular structure in two dimensions."
-  ; TODO validation that none of the inputs are further collections.
   {:test (fn []
            (is (is-matrix? `((1 2 3) (4 5 6))))
-           (is-not (is-matrix? `((1 2) (4 5 6)))))}
+           (is-not (is-matrix? `((1 2) (4 5 6))))
+           (is-not (is-matrix? `(1 2 3 4 5 6))))}
   [m]
   (and (not= (matrix-dimensions m) [nil nil])
        (empty? (remove is-vector? m))))
@@ -55,6 +58,7 @@
 (defn- can-multiply?
   "Checks if two matrices can be multiplied by each other."
   {:test (fn []
+           ; Invalid as the matrix dimensions are not in the form [m n] [n r]
            (is-not (can-multiply? `((1 2 3)) `((1 2 3))))
            (is (can-multiply? `((1 2) (3 4) (5 6)) `((1 2) (3 4)))))}
   [m1 m2]
@@ -66,6 +70,7 @@
   "Converts a matrix from row major to column major and vice-versa."
   {:test (fn []
            (is= (row-maj<->col-maj `((1 2 3) (1 2 3))) `((1 1) (2 2) (3 3)))
+           (is= (row-maj<->col-maj `((1 1) (2 2) (3 3)))`((1 2 3) (1 2 3)))
            (error? (row-maj<->col-maj `(1 2))))}
   [m]
   (if (is-matrix? m)
