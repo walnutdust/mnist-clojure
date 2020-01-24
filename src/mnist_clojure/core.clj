@@ -147,14 +147,14 @@
            (is= (train-once `((1) (0.2) (0.1))
                             `(1 0 0)
                             `((0.1 0.2 0.1 0.2)
-                              (0.1 0.1 0.2 0.2))
+                              (0.1 0.1 0.2 0.2)
+                              (0.1 0.1 0.2 0.3))
                             0.5)
-                `((0.3400053299222091 0.4400053299222091 0.14800106598444182 0.22400053299222092)
-                  (-0.1400053299222091 -0.1400053299222091 0.1519989340155582 0.1759994670077791))))}
+                `((0.42489994050724433 0.5248999405072443 0.16497998810144887 0.23248999405072446)
+                  (-0.06163772717103516 -0.06163772717103516 0.16767245456579297 0.1838362272828965)
+                  (-0.06326221333620921 -0.06326221333620921 0.16734755733275816 0.28367377866637905))))}
   [input desired-output layer learning-factor]
-  (let [input (-> input
-                  (flatten)
-                  (conj 1))                                 ; conj 1 for the bias
+  (let [input (conj (flatten input) 1)                      ; conj 1 for the bias
         intermediate (->> (multiply layer input)
                           (flatten)
                           (map (fn [x] (Math/exp x))))
@@ -163,11 +163,13 @@
         updates (->> actual-output
                      (map - desired-output)
                      (map (partial * learning-factor)))]
-    (for [n (range (count updates))
-               :let [updated-row (->> input
-                                      (map (partial * (nth updates n)))
-                                      (map + (nth layer n)))]]
-           updated-row)))
+    (map (fn [update col]
+           (map (fn [weight input]
+                  (+ (* update input) weight))
+                col
+                input))
+         updates
+         layer)))
 
 (defn output-list
   "Creates the output list given the label."
@@ -211,10 +213,10 @@
 (defn predict
   "Predicts the output based on the trained layer and the input."
   {:test (fn []
-           (is= (predict [[1 9 1]
-                          [2 8 2]
-                          [3 2 3]]
-                         [1 1])
+           (is= (predict `((1 9 1)
+                           (2 8 2)
+                           (3 2 3))
+                         `(1 1))
                 1))}
   [layer input]
   (->> (multiply layer (conj (flatten input) 1))
@@ -249,7 +251,5 @@
                          "resources/train-labels.idx1-ubyte"
                          "resources/test-images.idx3-ubyte"
                          "resources/test-labels.idx1-ubyte"))
-
-
 
 
