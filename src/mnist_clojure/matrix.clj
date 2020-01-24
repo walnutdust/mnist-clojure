@@ -74,11 +74,7 @@
            (error? (row-maj<->col-maj `(1 2))))}
   [m]
   (if (is-matrix? m)
-    (let [n (count (first m))
-          flat-m (flatten m)]
-      (for [x (range n)
-            :let [y (take-nth n (drop x flat-m))]]
-        y))
+    (apply (partial map list) m)
     (error "row-maj<->col-maj was called with invalid input.")))
 
 (defn- vec?->mat

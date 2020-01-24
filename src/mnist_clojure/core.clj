@@ -101,39 +101,39 @@
        (+ 1)
        (/ 1)))
 
-(defn rand-d-vec
+(defn rand-d-list
   "Creates a vector of specified length with random decimal values between 0 to max"
   {:test (fn []
-           (is= (rand-d-vec 4 1 0.4)
+           (is= (rand-d-list 4 1 0.4)
                 [1961823115700386051
-                 [0.01660157088963388 0.5044600700514671 0.8178222714074991 0.1430590959000676]]))}
+                 `(0.1430590959000676 0.8178222714074991 0.5044600700514671 0.01660157088963388)]))}
   [length seed max]
   (reduce (fn [[seed rand-vals] _]
             (let [[next-seed rand-val] (rand seed max)]
               [next-seed (conj rand-vals rand-val)]))
-          [seed []]
+          [seed `()]
           (range length)))
 
 (defn rand-vec-max-mag
   "Creates a vector of specified length with random decimal values between -max to max."
   {:test (fn []
            (is= (rand-vec-max-mag 4 2 0)
-                [-9197343212719499864 [0 0 0 0]])
+                [-9197343212719499864 `(0 0 0 0)])
            (is= (rand-vec-max-mag 3 4 23)
-                [-7068052242903947273 [-18.93359371783845 13.63314510538855 -6.004336956424794]]))}
+                [-7068052242903947273 `(-6.004336956424794 13.63314510538855 -18.93359371783845)]))}
   [length seed max]
-  (let [[new-seed rand-vec] (rand-d-vec length seed (* 2 max))]
-    [new-seed (mapv (partial + (- max)) rand-vec)]))
+  (let [[new-seed rand-vec] (rand-d-list length seed (* 2 max))]
+    [new-seed (map (partial + (- max)) rand-vec)]))
 
 (defn initialize-layer
   "Initializes one layer of the neural network. Note the + 1 adjusts for the bias"
   ; y = Wx
   {:test (fn []
-           (is= (initialize-layer 1 3 1 0) [-8728512804673154413 [[0 0] [0 0] [0 0]]])
+           (is= (initialize-layer 1 3 1 0) [-8728512804673154413 `((0 0) (0 0) (0 0))])
            (is= (initialize-layer 3 2 24 1)
                 [7786394753034826687
-                 [[-0.6015623093589966 -0.48321265703216776 0.3397951933274954 0.6701701863995613]
-                  [-0.8371181152002505 0.5806762038640101 0.5576858765248609 -0.32256568051994106]]]))}
+                 '((0.6701701863995613 0.3397951933274954 -0.48321265703216776 -0.6015623093589966)
+                   (-0.32256568051994106 0.5576858765248609 0.5806762038640101 -0.8371181152002505))]))}
   [input-count output-count seed max]
   (reduce (fn [[seed rand-vecs] _]
             (let [[new-seed rand-vec] (rand-vec-max-mag (+ input-count 1) seed max)]
@@ -144,17 +144,17 @@
 (defn train-once
   "Processes one cycle of training the layer on the input and output"
   {:test (fn []
-           (is= (train-once [[1] [0.2] [0.1]]
-                            [1 0 0]
-                            [[0.1 0.2 0.1 0.2]
-                             [0.1 0.1 0.2 0.2]]
+           (is= (train-once `((1) (0.2) (0.1))
+                            `(1 0 0)
+                            `((0.1 0.2 0.1 0.2)
+                              (0.1 0.1 0.2 0.2))
                             0.5)
-                [[0.3400053299222091 0.4400053299222091 0.14800106598444182 0.22400053299222092]
-                 [-0.1400053299222091 -0.1400053299222091 0.1519989340155582 0.1759994670077791]]))}
+                `((0.3400053299222091 0.4400053299222091 0.14800106598444182 0.22400053299222092)
+                  (-0.1400053299222091 -0.1400053299222091 0.1519989340155582 0.1759994670077791))))}
   [input desired-output layer learning-factor]
   (let [input (-> input
                   (flatten)
-                  (conj 1))                                 ; conj 1 for the bias, note that it is added to the front
+                  (conj 1))                                 ; conj 1 for the bias
         intermediate (->> (multiply layer input)
                           (flatten)
                           (map (fn [x] (Math/exp x))))
@@ -162,23 +162,22 @@
         actual-output (map (fn [x] (/ x total)) intermediate) ; softmax
         updates (->> actual-output
                      (map - desired-output)
-                     (map (partial * learning-factor))
-                     (vec))]
-    (vec (for [n (range (count updates))
+                     (map (partial * learning-factor)))]
+    (for [n (range (count updates))
                :let [updated-row (->> input
                                       (map (partial * (nth updates n)))
-                                      (mapv + (nth layer n)))]]
-           updated-row))))
+                                      (map + (nth layer n)))]]
+           updated-row)))
 
-(defn output-vector
-  "Creates the output vector given the label."
+(defn output-list
+  "Creates the output list given the label."
   {:test (fn []
-           (is= (output-vector 1) [0 1 0 0 0 0 0 0 0 0])
-           (is= (output-vector 4) [0 0 0 0 1 0 0 0 0 0]))}
+           (is= (output-list 1) `(0 1 0 0 0 0 0 0 0 0))
+           (is= (output-list 4) `(0 0 0 0 1 0 0 0 0 0)))}
   [label]
-  (-> (repeat 10 0)
-      (vec)
-      (assoc (+ 0 label) 1)))
+  (for [i (range 10)
+        :let [y (if (= i label) 1 0)]]
+    y))
 
 (defn train
   [images-path labels-path training-factor epoches seed]
@@ -203,7 +202,7 @@
                 layer
                 (recur (rest images)
                        (rest labels)
-                       (train-once (first images) (output-vector (first labels)) layer training-factor)
+                       (train-once (first images) (output-list (first labels)) layer training-factor)
                        (do (when (= 0 (mod n 100)) (println n "/" num-images))
                            (inc n)))))
             (inc curr-epoch))))
