@@ -16,15 +16,15 @@
          (apply +))
     (error "Vectors passed to dot need to have the same length")))
 
-(defn matrix-dimensions
+(defn shape
   "Returns a row major matrix's dimensions in [rows columns], with [nil nil] if input is not a matrix."
   {:test (fn []
            ; Correctly computes the dimensions of a matrix
-           (is= (matrix-dimensions '((1 2 3) (3 4 3))) [2 3])
+           (is= (shape '((1 2 3) (3 4 3))) [2 3])
            ; Returns [nil nil] for invalid matrices - not regular, not a 2d list, and simply an integer
-           (is= (matrix-dimensions '((1) (2 3))) [nil nil])
-           (is= (matrix-dimensions '(1 2 3)) [nil nil])
-           (is= (matrix-dimensions 1) [nil nil]))}
+           (is= (shape '((1) (2 3))) [nil nil])
+           (is= (shape '(1 2 3)) [nil nil])
+           (is= (shape 1) [nil nil]))}
   [m]
   (if (and (coll? m) (coll? (first m)))
     (let [rows (count m)
@@ -36,72 +36,37 @@
               [nil nil])))
     [nil nil]))
 
-(defn- is-vector?
-  "Checks if a given input is a vector by checking if it conforms to a regular structure in one dimension."
-  {:test (fn []
-           (is-not (is-vector? `((1 2 3) (4 5 6))))
-           (is (is-vector? `(1 2 4 5 6))))}
-  [v]
-  (and (coll? v)
-       (empty? (filter coll? v))))
-
-(defn- is-matrix?
-  "Checks if a given input is a matrix by checking if it conforms to a regular structure in two dimensions."
-  {:test (fn []
-           (is (is-matrix? `((1 2 3) (4 5 6))))
-           (is-not (is-matrix? `((1 2) (4 5 6))))
-           (is-not (is-matrix? `(1 2 3 4 5 6))))}
-  [m]
-  (and (not= (matrix-dimensions m) [nil nil])
-       (empty? (remove is-vector? m))))
-
-(defn- can-multiply?
+(defn can-multiply?
   "Checks if two matrices can be multiplied by each other."
   {:test (fn []
            ; Invalid as the matrix dimensions are not in the form [m n] [n r]
            (is-not (can-multiply? `((1 2 3)) `((1 2 3))))
            (is (can-multiply? `((1 2) (3 4) (5 6)) `((1 2) (3 4)))))}
   [m1 m2]
-  (and (= (second (matrix-dimensions m1))
-          (first (matrix-dimensions m2)))
-       (not= (matrix-dimensions m1) [nil nil])))
+  (let [[_ m1c] (shape m1)
+        [m2r _] (shape m2)]
+    (and (= m1c m2r)
+         (not= m1c nil))))
 
-(defn- row-maj<->col-maj
+(defn row-maj<->col-maj
   "Converts a matrix from row major to column major and vice-versa."
   {:test (fn []
            (is= (row-maj<->col-maj `((1 2 3) (1 2 3))) `((1 1) (2 2) (3 3)))
-           (is= (row-maj<->col-maj `((1 1) (2 2) (3 3)))`((1 2 3) (1 2 3)))
-           (error? (row-maj<->col-maj `(1 2))))}
+           (is= (row-maj<->col-maj `((1 1) (2 2) (3 3))) `((1 2 3) (1 2 3)))
+           (is= (row-maj<->col-maj `((1) (2))) `((1 2)))
+           (is= (row-maj<->col-maj `((1 2))) `((1) (2))))}
   [m]
-  (if (is-matrix? m)
-    (apply (partial map list) m)
+  (if (some? (shape m))
+    (apply map list m)
     (error "row-maj<->col-maj was called with invalid input.")))
 
-(defn- vec?->mat
-  "Converts a vector to a matrix if necessary. Assumes vector is a column vector. Does nothing if a matrix is passed
-  in."
-  {:test (fn []
-           (is= (vec?->mat `(1 2 3)) `((1) (2) (3)))
-           (is= (vec?->mat `((1 2 3) (4 5 6)))`((1 2 3) (4 5 6))))}
-  [v?]
-  (cond
-    (is-vector? v?) (map list v?)
-    (is-matrix? v?) v?
-    :else ((print v?)(error "A non-vector, non-matrix input was passed to vec?->mat"))))
 
 (defn multiply
   "Multiplies matrices."
   ;TODO extend to n matrices
   ;TODO increase efficiency - current n^3 algorithm
   {:test (fn []
-           (error? (multiply '((1 2 3) (4 5 6)) `((1 2 3) (3 4 5))))
-           ; Note we can't leave the first one as a list because it is row major
-           (is= (multiply '((1 2 3)) '(1 2 3)) `((14)))
            (is= (multiply `((1 2 3) (4 5 6)) `((1 2) (3 4) (5 6))) `((22 28) (49 64))))}
   [m1 m2]
-  (let [m1 (vec?->mat m1)
-        m2 (vec?->mat m2)]
-    (if (can-multiply? m1 m2)
-      (let [m2' (row-maj<->col-maj m2)]
-        (map (fn [m1x] (map (fn [m2y] (dot m1x m2y)) m2')) m1))
-      (error "Multiply called with two matrices of invalid dimensions"))))
+  (let [m2' (row-maj<->col-maj m2)]
+    (map (fn [m1x] (map (fn [m2y] (dot m1x m2y)) m2')) m1)))

@@ -2,7 +2,7 @@
   (:require [clojure.java.io :as io]
             [ysera.error :refer [error]]
             [ysera.test :refer [is is= is-not]]
-            [mnist-clojure.matrix :refer [multiply]]
+            [mnist-clojure.matrix :refer [multiply can-multiply?]]
             [mnist-clojure.random :refer [rand-int rand]])
   (:refer-clojure :exclude [rand rand-int]))
 
@@ -61,7 +61,8 @@
     {:data       (->> data
                       (drop 16)
                       (map byte->int)
-                      (map (partial * (/ 1 255))))
+                      (map (partial * (/ 1 255)))
+                      (map float))
      :num-images (sublist-bytes->int data 4 4)
      :height     (sublist-bytes->int data 8 4)
      :width      (sublist-bytes->int data 12 4)}))
@@ -79,15 +80,13 @@
                                 :width      2
                                 :height     2
                                 :num-images 3})
-                {:data '(((2 5) (4 6)) ((9 4) (2 3)) ((5 0) (2 7))), :width 2, :height 2, :num-images 3}))}
+                {:data '((2 5 4 6) (9 4 2 3) (5 0 2 7)), :width 2, :height 2, :num-images 3}))}
   [image-data]
   (let [{width  :width
          height :height} image-data]
     (update image-data
             :data
-            (fn [data] (->> (partition (* width height) data)
-                            (map (partial partition width))
-                            (map (fn [x] (map vec x))))))))
+            (fn [data] (partition (* width height) data)))))
 
 (defn sigmoid
   "Performs the sigmoid function on the input."
@@ -102,11 +101,11 @@
        (/ 1)))
 
 (defn rand-d-list
-  "Creates a vector of specified length with random decimal values between 0 to max"
+  "Creates a list of specified length with random decimal values between 0 to max"
   {:test (fn []
            (is= (rand-d-list 4 1 0.4)
                 [1961823115700386051
-                 `(0.1430590959000676 0.8178222714074991 0.5044600700514671 0.01660157088963388)]))}
+                 '(0.1430590959000676 0.8178222714074991 0.5044600700514671 0.01660157088963388)]))}
   [length seed max]
   (reduce (fn [[seed rand-vals] _]
             (let [[next-seed rand-val] (rand seed max)]
@@ -114,16 +113,16 @@
           [seed `()]
           (range length)))
 
-(defn rand-vec-max-mag
-  "Creates a vector of specified length with random decimal values between -max to max."
+(defn rand-list-max-mag
+  "Creates a list of specified length with random decimal values between -max to max."
   {:test (fn []
-           (is= (rand-vec-max-mag 4 2 0)
+           (is= (rand-list-max-mag 4 2 0)
                 [-9197343212719499864 `(0 0 0 0)])
-           (is= (rand-vec-max-mag 3 4 23)
+           (is= (rand-list-max-mag 3 4 23)
                 [-7068052242903947273 `(-6.004336956424794 13.63314510538855 -18.93359371783845)]))}
   [length seed max]
-  (let [[new-seed rand-vec] (rand-d-list length seed (* 2 max))]
-    [new-seed (map (partial + (- max)) rand-vec)]))
+  (let [[new-seed rand-list] (rand-d-list length seed (* 2 max))]
+    [new-seed (map (partial + (- max)) rand-list)]))
 
 (defn initialize-layer
   "Initializes one layer of the neural network. Note the + 1 adjusts for the bias"
@@ -132,19 +131,19 @@
            (is= (initialize-layer 1 3 1 0) [-8728512804673154413 `((0 0) (0 0) (0 0))])
            (is= (initialize-layer 3 2 24 1)
                 [7786394753034826687
-                 '((0.6701701863995613 0.3397951933274954 -0.48321265703216776 -0.6015623093589966)
-                   (-0.32256568051994106 0.5576858765248609 0.5806762038640101 -0.8371181152002505))]))}
+                 '((-0.32256568051994106 0.5576858765248609 0.5806762038640101 -0.8371181152002505)
+                   (0.6701701863995613 0.3397951933274954 -0.48321265703216776 -0.6015623093589966))]))}
   [input-count output-count seed max]
-  (reduce (fn [[seed rand-vecs] _]
-            (let [[new-seed rand-vec] (rand-vec-max-mag (+ input-count 1) seed max)]
-              [new-seed (conj rand-vecs rand-vec)]))
-          [seed []]
+  (reduce (fn [[seed rand-lists] _]
+            (let [[new-seed rand-list] (rand-list-max-mag (+ input-count 1) seed max)]
+              [new-seed (conj rand-lists rand-list)]))
+          [seed `()]
           (range output-count)))
 
 (defn train-once
   "Processes one cycle of training the layer on the input and output"
   {:test (fn []
-           (is= (train-once `((1) (0.2) (0.1))
+           (is= (train-once `(1 0.2 0.1)
                             `(1 0 0)
                             `((0.1 0.2 0.1 0.2)
                               (0.1 0.1 0.2 0.2)
@@ -154,7 +153,7 @@
                   (-0.06163772717103516 -0.06163772717103516 0.16767245456579297 0.1838362272828965)
                   (-0.06326221333620921 -0.06326221333620921 0.16734755733275816 0.28367377866637905))))}
   [input desired-output layer learning-factor]
-  (let [input (conj (flatten input) 1)                      ; conj 1 for the bias
+  (let [input (map list (conj input 1))                     ; conj 1 for the bias
         intermediate (->> (multiply layer input)
                           (flatten)
                           (map (fn [x] (Math/exp x))))
@@ -167,7 +166,7 @@
            (map (fn [weight input]
                   (+ (* update input) weight))
                 col
-                input))
+                (flatten input)))
          updates
          layer)))
 
@@ -177,9 +176,8 @@
            (is= (output-list 1) `(0 1 0 0 0 0 0 0 0 0))
            (is= (output-list 4) `(0 0 0 0 1 0 0 0 0 0)))}
   [label]
-  (for [i (range 10)
-        :let [y (if (= i label) 1 0)]]
-    y))
+  (for [n (range 10)]
+    (if (= n label) 1 0)))
 
 (defn train
   [images-path labels-path training-factor epoches seed]
@@ -189,25 +187,19 @@
          height     :height
          num-images :num-images} (mnist->images (get-mnist-image-data images-path))
         {labels     :data
-         num-labels :num-labels} (get-mnist-label-data labels-path)]
+         num-labels :num-labels} (get-mnist-label-data labels-path)
+        images (take 40000 images)]
     (if (= num-images num-labels)
-      (loop [layer (initialize-layer (* width height) 10 0.1 seed)
-             curr-epoch 0]
-        (if (= curr-epoch epoches)
-          layer
-          (recur
-            (loop [images images
-                   labels labels
-                   layer layer
-                   n 1]
-              (if (empty? images)
+      (let [[_ layer] (initialize-layer (* width height) 10 seed 0.1)
+            imgs+labels+n (map vector images labels (range num-labels))]
+        (reduce (fn [layer _]
+                  (reduce (fn [layer [img label n]]
+                            (when (= (mod n 100) 0) (println n "/" num-labels))
+                            (train-once img (output-list label) layer training-factor))
+                          layer
+                          imgs+labels+n))
                 layer
-                (recur (rest images)
-                       (rest labels)
-                       (train-once (first images) (output-list (first labels)) layer training-factor)
-                       (do (when (= 0 (mod n 100)) (println n "/" num-images))
-                           (inc n)))))
-            (inc curr-epoch))))
+                (range epoches)))
       (error "The number of images and labels do not match"))))
 
 (defn predict
@@ -219,7 +211,9 @@
                          `(1 1))
                 1))}
   [layer input]
-  (->> (multiply layer (conj (flatten input) 1))
+  (->> (conj input 1)
+       (map list)
+       (multiply layer)
        (flatten)
        (map-indexed vector)
        (apply max-key second)
@@ -231,25 +225,27 @@
   (let [{test-images :data
          num-images  :num-images} (mnist->images (get-mnist-image-data test-imgs))
         {test-labels :data
-         num-labels  :num-labels} (get-mnist-label-data test-labels)
-        model (train train-imgs train-labels 0.2 10 1)]
+         num-labels  :num-labels} (get-mnist-label-data test-labels)]
     (if (= num-images num-labels)
-      ((do (println "Testing the model..."))
-       (loop [hits 0
-              test-images test-images
-              test-labels test-labels
-              n 1]
-         (if (empty? test-images)
-           [hits num-images]
-           (do (when (= 0 (mod n 100)) (println n "/" num-images))
-               (if (= (predict model (first test-images)) (first test-labels))
-                 (recur (inc hits) (rest test-images) (rest test-labels) (inc n))
-                 (recur hits (rest test-images) (rest test-labels) (inc n)))))))
+      (let [model (train train-imgs train-labels 0.2 1 1)]
+        (do
+          (println "Testing the model...")
+          (loop [hits 0
+                 test-images test-images
+                 test-labels test-labels
+                 n 1]
+            (if (empty? test-images)
+              [hits num-images]
+              (do (when (= 0 (mod n 100)) (println n "/" num-images))
+                  (if (= (predict model (first test-images)) (first test-labels))
+                    (recur (inc hits) (rest test-images) (rest test-labels) (inc n))
+                    (recur hits (rest test-images) (rest test-labels) (inc n))))))))
       (error "The number of test images and test labels are not equal"))))
 
-(comment (train-and-test "resources/train-images.idx3-ubyte"
+(comment (ignore (time (train "resources/train-images.idx3-ubyte"
+                              "resources/train-labels.idx1-ubyte" 0.2 10 1))))
+
+(comment (time (train-and-test "resources/train-images.idx3-ubyte"
                          "resources/train-labels.idx1-ubyte"
                          "resources/test-images.idx3-ubyte"
-                         "resources/test-labels.idx1-ubyte"))
-
-
+                         "resources/test-labels.idx1-ubyte")))
