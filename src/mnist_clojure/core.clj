@@ -30,8 +30,9 @@
     (+ 256 byte)
     byte))
 
-(defn read-mnist-file [file-name]
+(defn read-mnist-file
   "Reads the idx[x]-ubyte format and parses it into a byte array"
+  [file-name]
   (let [file (io/file file-name)
         b-array (byte-array (.length file))]
     (with-open [stream (io/input-stream file)]
@@ -104,8 +105,9 @@
   "Creates a list of specified length with random decimal values between 0 to max"
   {:test (fn []
            (is= (rand-d-list 4 1 0.4)
-                [1961823115700386051
-                 '(0.1430590959000676 0.8178222714074991 0.5044600700514671 0.01660157088963388)]))}
+                [-9136436700791295257
+                 [0.20178402802058684 0.02002609726974093
+                  0.006640628355853552 1.8626451500983188E-10]]))}
   [length seed max]
   (reduce (fn [[seed rand-vals] _]
             (let [[next-seed rand-val] (rand seed max)]
@@ -119,7 +121,10 @@
            (is= (rand-list-max-mag 4 2 0)
                 [-9197343212719499864 `(0 0 0 0)])
            (is= (rand-list-max-mag 3 4 23)
-                [-7068052242903947273 `(-6.004336956424794 13.63314510538855 -18.93359371783845)]))}
+                [77986490623247743
+                 [-22.18838978334721
+                  -19.945311020568624
+                  -22.999999914318323]]))}
   [length seed max]
   (let [[new-seed rand-list] (rand-d-list length seed (* 2 max))]
     [new-seed (map (partial + (- max)) rand-list)]))
@@ -128,11 +133,18 @@
   "Initializes one layer of the neural network. Note the + 1 adjusts for the bias"
   ; y = Wx
   {:test (fn []
-           (is= (initialize-layer 1 3 1 0) [-8728512804673154413 `((0 0) (0 0) (0 0))])
+           (is= (initialize-layer 1 3 1 0)
+                [-8728512804673154413 [[0 0] [0 0] [0 0]]])
            (is= (initialize-layer 3 2 24 1)
-                [7786394753034826687
-                 '((-0.32256568051994106 0.5576858765248609 0.5806762038640101 -0.8371181152002505)
-                   (0.6701701863995613 0.3397951933274954 -0.48321265703216776 -0.6015623093589966))]))}
+                [2665986749794895764
+                 [[0.34034037279912277
+                   -0.24479991162419323
+                   -0.32040961334500895
+                   -0.38945634541542096]
+                  [0.03357468593566448
+                   -0.9542951490517217
+                   -0.20312461871799303
+                   -0.9999999776482582]]]))}
   [input-count output-count seed max]
   (reduce (fn [[seed rand-lists] _]
             (let [[new-seed rand-list] (rand-list-max-mag (+ input-count 1) seed max)]
@@ -246,6 +258,6 @@
                               "resources/train-labels.idx1-ubyte" 0.2 10 1))))
 
 (comment (time (train-and-test "resources/train-images.idx3-ubyte"
-                         "resources/train-labels.idx1-ubyte"
-                         "resources/test-images.idx3-ubyte"
-                         "resources/test-labels.idx1-ubyte")))
+                               "resources/train-labels.idx1-ubyte"
+                               "resources/test-images.idx3-ubyte"
+                               "resources/test-labels.idx1-ubyte")))
