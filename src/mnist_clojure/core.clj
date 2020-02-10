@@ -8,7 +8,7 @@
 
 (def ignore (constantly nil))                               ; Helper function to ignore the output
 
-(defn bytes->int
+(defn- bytes->int
   "Converts a byte array into an integer."
   {:test (fn []
            (is= (bytes->int '(0 0 8 3)) 2051)
@@ -19,7 +19,7 @@
        (apply (partial str "0x"))
        read-string))
 
-(defn byte->int
+(defn- byte->int
   "Hacky method of converting a single byte to int. This works because clojure reads in bytes as signed integers."
   {:test (fn []
            (is= (byte->int 3) 3)
@@ -30,7 +30,7 @@
     (+ 256 byte)
     byte))
 
-(defn read-mnist-file
+(defn- read-mnist-file
   "Reads the idx[x]-ubyte format and parses it into a byte array"
   [file-name]
   (let [file (io/file file-name)
@@ -39,7 +39,7 @@
       (.read stream b-array))
     b-array))
 
-(defn sublist-bytes->int
+(defn- sublist-bytes->int
   "Converts the bytes between the start index of the coll to start+4 to an unsigned integer"
   {:test (fn []
            (is= (sublist-bytes->int '(1 2 3 0 0 8 3 5) 3 4) 2051))}
@@ -152,7 +152,7 @@
           [seed `()]
           (range output-count)))
 
-(defn train-once
+(defn- train-once
   "Processes one cycle of training the layer on the input and output"
   {:test (fn []
            (is= (train-once `(1 0.2 0.1)
@@ -182,7 +182,7 @@
          updates
          layer)))
 
-(defn output-list
+(defn- output-list
   "Creates the output list given the label."
   {:test (fn []
            (is= (output-list 1) `(0 1 0 0 0 0 0 0 0 0))
@@ -191,7 +191,7 @@
   (for [n (range 10)]
     (if (= n label) 1 0)))
 
-(defn train
+(defn- train
   [images-path labels-path training-factor epoches seed]
   (println "Training the model...")
   (let [{images     :data
@@ -199,8 +199,7 @@
          height     :height
          num-images :num-images} (mnist->images (get-mnist-image-data images-path))
         {labels     :data
-         num-labels :num-labels} (get-mnist-label-data labels-path)
-        images (take 40000 images)]
+         num-labels :num-labels} (get-mnist-label-data labels-path)]
     (if (= num-images num-labels)
       (let [[_ layer] (initialize-layer (* width height) 10 seed 0.1)
             imgs+labels+n (map vector images labels (range num-labels))]
@@ -214,22 +213,31 @@
                 (range epoches)))
       (error "The number of images and labels do not match"))))
 
-(defn predict
+(defn- predict
   "Predicts the output based on the trained layer and the input."
   {:test (fn []
            (is= (predict `((1 9 1)
                            (2 8 2)
                            (3 2 3))
                          `(1 1))
-                1))}
+                [1 12]))}
   [layer input]
   (->> (conj input 1)
        (map list)
        (multiply layer)
        (flatten)
        (map-indexed vector)
-       (apply max-key second)
-       (first)))
+       (apply max-key second)))
+
+(defn- top-n-misclassified
+  "Finds the top n misclassified images and their predictions"
+  {:test (fn []
+           (is= (top-n-misclassified [[2 0.3] [4 0.5] [2 0.4] [21 0.9] [42 0.9]] ["a" "b" "c" "d" "e"] 3)
+                [[4 0.5 "b"] [21 0.9 "d"] [42 0.9 "e"]]))}
+  [misclassified misclassified-imgs n]
+  (->> (map conj misclassified misclassified-imgs)
+       (sort-by second)
+       (take-last n)))
 
 (defn train-and-test
   "Trains the model and tests it."
@@ -242,22 +250,44 @@
       (let [model (train train-imgs train-labels 0.2 1 1)]
         (do
           (println "Testing the model...")
-          (loop [hits 0
-                 test-images test-images
-                 test-labels test-labels
-                 n 1]
-            (if (empty? test-images)
-              [hits num-images]
-              (do (when (= 0 (mod n 100)) (println n "/" num-images))
-                  (if (= (predict model (first test-images)) (first test-labels))
-                    (recur (inc hits) (rest test-images) (rest test-labels) (inc n))
-                    (recur hits (rest test-images) (rest test-labels) (inc n))))))))
+          (as-> (loop [confusion (vec (repeat 10 (vec (repeat 10 0))))
+                       test-images test-images
+                       test-labels test-labels
+                       misclassified []
+                       misclassified-imgs []
+                       n 1]
+                  (if (empty? test-images)
+                    {:misclassified      misclassified
+                     :misclassified-imgs misclassified-imgs
+                     :confusion          confusion}
+                    (do (when (= 0 (mod n 100)) (println n "/" num-images))
+                        (let [prediction (predict model (first test-images))
+                              confusion (update-in confusion [(int (first prediction))
+                                                              (int (first test-labels))] inc)]
+                          (if (= (first prediction)
+                                 (first test-labels))
+                            (recur confusion
+                                   (rest test-images)
+                                   (rest test-labels)
+                                   (conj misclassified prediction)
+                                   (conj misclassified-imgs (first test-images))
+                                   (inc n))
+                            (recur confusion
+                                   (rest test-images)
+                                   (rest test-labels)
+                                   misclassified
+                                   misclassified-imgs
+                                   (inc n))))))) $
+                  {:mistakes  (top-n-misclassified (:misclassified $) (:misclassified-imgs $) 10)
+                   :confusion (:confusion $)
+                   :accuracy  (map-indexed (fn [idx row]
+                                             (double (/ (get row idx)
+                                                        (apply + row))))
+                                           (:confusion $))})))
       (error "The number of test images and test labels are not equal"))))
 
-(comment (ignore (time (train "resources/train-images.idx3-ubyte"
-                              "resources/train-labels.idx1-ubyte" 0.2 10 1))))
+(comment (train-and-test "resources/train-images.idx3-ubyte"
+                "resources/train-labels.idx1-ubyte"
+                "resources/test-images.idx3-ubyte"
+                "resources/test-labels.idx1-ubyte"))
 
-(comment (time (train-and-test "resources/train-images.idx3-ubyte"
-                               "resources/train-labels.idx1-ubyte"
-                               "resources/test-images.idx3-ubyte"
-                               "resources/test-labels.idx1-ubyte")))
