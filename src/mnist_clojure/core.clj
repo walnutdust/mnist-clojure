@@ -199,13 +199,14 @@
          height     :height
          num-images :num-images} (mnist->images (get-mnist-image-data images-path))
         {labels     :data
-         num-labels :num-labels} (get-mnist-label-data labels-path)]
+         num-labels :num-labels} (get-mnist-label-data labels-path)
+        images (take 25000 images)]                         ; Clojure limitations on my machine
     (if (= num-images num-labels)
       (let [[_ layer] (initialize-layer (* width height) 10 seed 0.1)
             imgs+labels+n (map vector images labels (range num-labels))]
         (reduce (fn [layer _]
                   (reduce (fn [layer [img label n]]
-                            (when (= (mod n 100) 0) (println n "/" num-labels))
+                            (when (= (rem n 100) 0) (println n "/" num-labels))
                             (train-once img (output-list label) layer training-factor))
                           layer
                           imgs+labels+n))
@@ -220,22 +221,25 @@
                            (2 8 2)
                            (3 2 3))
                          `(1 1))
-                [1 12]))}
+                [1 0.7213991842739687]))}
   [layer input]
-  (->> (conj input 1)
-       (map list)
-       (multiply layer)
-       (flatten)
-       (map-indexed vector)
-       (apply max-key second)))
+  (as-> (conj input 1) $
+        (map list $)
+        (multiply layer $)
+        (flatten $)
+        (map (fn [x] (Math/exp x)) $)
+        (let [output $
+              sum (apply + output)]
+          (map-indexed (fn [idx x] [idx (/ x sum)]) output))
+        (apply max-key second $)))
 
-(defn- top-n-misclassified
+(defn- top-n-mistakes
   "Finds the top n misclassified images and their predictions"
   {:test (fn []
-           (is= (top-n-misclassified [[2 0.3] [4 0.5] [2 0.4] [21 0.9] [42 0.9]] ["a" "b" "c" "d" "e"] 3)
+           (is= (top-n-mistakes [[2 0.3 "a"] [4 0.5 "b"] [2 0.4 "c"] [21 0.9 "d"] [42 0.9 "e"]] 3)
                 [[4 0.5 "b"] [21 0.9 "d"] [42 0.9 "e"]]))}
-  [misclassified misclassified-imgs n]
-  (->> (map conj misclassified misclassified-imgs)
+  [mistakes n]
+  (->> mistakes
        (sort-by second)
        (take-last n)))
 
@@ -248,46 +252,34 @@
          num-labels  :num-labels} (get-mnist-label-data test-labels)]
     (if (= num-images num-labels)
       (let [model (train train-imgs train-labels 0.2 1 1)]
-        (do
-          (println "Testing the model...")
-          (as-> (loop [confusion (vec (repeat 10 (vec (repeat 10 0))))
-                       test-images test-images
-                       test-labels test-labels
-                       misclassified []
-                       misclassified-imgs []
-                       n 1]
-                  (if (empty? test-images)
-                    {:misclassified      misclassified
-                     :misclassified-imgs misclassified-imgs
-                     :confusion          confusion}
-                    (do (when (= 0 (mod n 100)) (println n "/" num-images))
-                        (let [prediction (predict model (first test-images))
-                              confusion (update-in confusion [(int (first prediction))
-                                                              (int (first test-labels))] inc)]
-                          (if (= (first prediction)
-                                 (first test-labels))
-                            (recur confusion
-                                   (rest test-images)
-                                   (rest test-labels)
-                                   (conj misclassified prediction)
-                                   (conj misclassified-imgs (first test-images))
-                                   (inc n))
-                            (recur confusion
-                                   (rest test-images)
-                                   (rest test-labels)
-                                   misclassified
-                                   misclassified-imgs
-                                   (inc n))))))) $
-                  {:mistakes  (top-n-misclassified (:misclassified $) (:misclassified-imgs $) 10)
-                   :confusion (:confusion $)
-                   :accuracy  (map-indexed (fn [idx row]
-                                             (double (/ (get row idx)
-                                                        (apply + row))))
-                                           (:confusion $))})))
+        (println "Testing the model...")
+        (as-> (map vector test-images test-labels (range num-images)) $
+              (reduce (fn [{mistakes  :mistakes
+                            confusion :confusion}
+                           [img lbl n]]
+                        (do (when (= 0 (rem n 100)) (println n "/" num-images))
+                            (let [prediction (predict model img)]
+                              {:mistakes  (if (= (first prediction) lbl)
+                                            mistakes
+                                            (conj mistakes (conj prediction img)))
+                               :confusion (update-in confusion [(int lbl)
+                                                                (int (first prediction))] inc)})))
+                      {:mistakes  []
+                       :confusion (vec (repeat 10 (vec (repeat 10 0))))}
+                      $)
+              {:mistakes         (top-n-mistakes (:mistakes $) 10)
+               :confusion        (:confusion $)
+               :digit-accuracy   (map-indexed (fn [idx row]
+                                                (let [sum (apply + row)]
+                                                  (if (= sum 0)
+                                                    [idx 0]
+                                                    [idx (double (/ (get row idx)
+                                                                    (apply + row)))])))
+                                              (:confusion $))
+               :overall-accuracy (- 1 (/ (count (:mistakes $)) num-images))}))
       (error "The number of test images and test labels are not equal"))))
 
 (comment (train-and-test "resources/train-images.idx3-ubyte"
-                "resources/train-labels.idx1-ubyte"
-                "resources/test-images.idx3-ubyte"
-                "resources/test-labels.idx1-ubyte"))
-
+                         "resources/train-labels.idx1-ubyte"
+                         "resources/test-images.idx3-ubyte"
+                         "resources/test-labels.idx1-ubyte"))
