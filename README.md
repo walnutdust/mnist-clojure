@@ -31,7 +31,7 @@ better results.
 
 ## Contributors
 
-* Garett Tok Ern Liang [(walnutdust)]((https://github.com/walnutdust/))
+* Garett Tok Ern Liang [(walnutdust)](https://github.com/walnutdust/)
 * David Lee [(deejayessel)](https://github.com/deejayessel/)
 
 ## License
